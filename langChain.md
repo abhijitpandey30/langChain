@@ -29,3 +29,34 @@
  -  PROMPT template must declare the varibales tit needs to build the prompt
 
  - when we call llm=OpenAi()-> it looks for the OPENAI_API_KEY env variable
+
+ #LLM 
+ - Large Langugae Models
+ - Traditional LLM-> completion style
+ - https://platform.openai.com/chat/edit?models=gpt-4.1
+ --> just add to the last message
+
+ Conversationsal styles - back and forth messaging -> ChatGPT, Bard, Claude
+ -> most legacy ones are completion
+
+ # FileChatMessageHistory - > we are able to save all our messages so that we can show it, just like chatgpt stores it on the left
+ -> right now we are storing it in file, but we can store it also in redis, mysql etc
+ - this might be expensive, since we are keeping on adding messages, and this increases the token size we send to OpenAi servers.
+ - ConversationSummaryMemory, on the other hand, has it's own promt and llm, it creates a summary of our system, user and ai message, and creates a syste message for the next question
+ - # The memory is used twice per chain call — once before the model runs, and once after.
+
+-Specifically:
+
+# Before the LLM is called → the chain loads memory (to inject past messages into the prompt).
+
+# After the LLM returns → the chain saves the new interaction (user input + model output) back into memory.
+
+ - use verbose=True to see those messages
+
+ - langchain also has loader to load u files rom s3 -> 
+
+ - longer the prompt, more time and more money to run
+
+ # A vector Store is. database that is specialised in storing/seacrhing around these emeddings
+ -> ChromaDB -> open souce -> internally uses SQLlite
+ -> langChain has it's own wrapper for ChromaDB
