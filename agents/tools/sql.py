@@ -1,51 +1,65 @@
+# tools/sql.py
 import sqlite3
-from langchain.tools import Tool
-from pydantic.v1 import BaseModel
-from typing import List
-conn = sqlite3.connect("db.sqlite");
+from typing import List, Annotated
 
-def list_tables():
-    c=conn.cursor()
+from pydantic import BaseModel, Field
+from langchain.tools import StructuredTool
+
+# Create a single connection for simplicity
+conn = sqlite3.connect("db.sqlite")
+
+
+def list_tables() -> str:
+    """Return a list of all table names in the SQLite database."""
+    c = conn.cursor()
     c.execute("SELECT name FROM sqlite_master WHERE type='table';")
     rows = c.fetchall()
     return "\n".join(row[0] for row in rows if row[0] is not None)
 
-def run_sqlite_query(query):
+
+def run_sqlite_query(query: str):
+    """Execute a SQL query and return results."""
     try:
-        c = conn.cursor();
+        c = conn.cursor()
         c.execute(query)
-        return c.fetchall();
+        return c.fetchall()
     except sqlite3.OperationalError as err:
-        return f"The following error occured: {str(err)}"
-    
-def describe_tables(table_names):
+        return f"The following error occurred: {str(err)}"
+
+
+def describe_tables(table_names: List[str]):
+    """Return the CREATE TABLE SQL for the given list of table names."""
+    c = conn.cursor()
     if isinstance(table_names, str):
         table_names = [table_names]
-    print(f"table_names:{table_names}")
-    c = conn.cursor()
-    tables = ", ".join("'" + table + "'" for table in table_names)
-    print(f"tables:{tables}")
-    rows = c.execute(f"SELECT sql FROM sqlite_master WHERE type='table' AND name IN ({tables})")
+
+    formatted = ", ".join(f"'{table}'" for table in table_names)
+    rows = c.execute(
+        f"SELECT sql FROM sqlite_master WHERE type='table' AND name IN ({formatted})"
+    )
     return "\n".join(row[0] for row in rows if row[0] is not None)
 
-class RunQueryArgsSchema(BaseModel):
-    query:str
 
-run_query_tool = Tool.from_function(
-    name="run_sqlite_query",
-    description="Run a sqlite query",
+# --- Pydantic argument schemas ---
+class RunQueryArgs(BaseModel):
+    query: Annotated[str, Field(description="The SQL query to execute.")]
+
+
+class DescribeTablesArgs(BaseModel):
+    table_names: Annotated[List[str], Field(description="Names of tables to describe.")]
+
+
+# --- Tools definitions (new API) ---
+run_query_tool = StructuredTool.from_function(
     func=run_sqlite_query,
-    args_schema=RunQueryArgsSchema
-
+    name="run_sqlite_query",
+    description="Run a SQL query against the SQLite database and return results.",
+    args_schema=RunQueryArgs,
 )
 
-class DescribeTablesArgsSchema(BaseModel):
-    table_names:List[str]
-
-describe_tables_tool = Tool.from_function(
-    name="describe_tables",
-    description="Given a list of tables, returns the schema of those tables",
+describe_tables_tool = StructuredTool.from_function(
     func=describe_tables,
-    args_schema=DescribeTablesArgsSchema
-
+    name="describe_tables",
+    description="Given a list of tables, return their CREATE TABLE schema definitions.",
+    args_schema=DescribeTablesArgs,
 )
