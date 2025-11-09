@@ -60,3 +60,34 @@
  # A vector Store is. database that is specialised in storing/seacrhing around these emeddings
  -> ChromaDB -> open souce -> internally uses SQLlite
  -> langChain has it's own wrapper for ChromaDB
+
+
+ # Tools for LLM
+ - https://platform.openai.com/chat/edit?models=gpt-4.1
+
+ # System message
+You are a helpful assistant
+
+# Prompt messages
+You have access to the following tools:
+
+run_query: runs an sqlite query and returns the result. Accepts an argument of a sql query as string
+To use a tool, always respond with the following format
+{
+"name": <name of the tool to use>,
+"argument": <argument to pass to the tool>
+}
+
+# User message
+- How many orders to we have?
+
+# JSON data to JSON schema transformer
+
+https://transform.tools/json-to-json-schema
+
+
+"agent_scratchpad" -> is a special, this how Agent keeps track of memory for chat models
+
+If we ask, how many users havr shipping_address, then chatGPT will have have to assume that there is a column named "shipping_address" in users DB.
+
+- we can return the error result of the tool back over to chatgpt
